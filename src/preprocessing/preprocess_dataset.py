@@ -20,9 +20,13 @@ SELECTED_FEATURES = [
 ]
 
 # Paths
-DATA_PATH = "../../data/raw/Dataset.csv"
-OUTPUT_DIR = Path("../../data/processed")
-ARTIFACTS_DIR = Path("../../models/artifacts")
+DATA_PATH = "data/raw/Dataset.csv"
+OUTPUT_DIR = Path("data/processed")
+ARTIFACTS_DIR = Path("models/artifacts")
+
+# Create directories
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
 
 # 1. Load data
 print("Loading data...")

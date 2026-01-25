@@ -15,9 +15,10 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 
 # Paths
-PROCESSED_DIR = Path("../../data/processed")
-RAW_DATA = Path("../../data/raw/Dataset.csv")
-MODEL_DIR = Path("../../models/supervised")
+PROCESSED_DIR = Path("data/processed")
+RAW_DATA = Path("data/raw/Dataset.csv")
+MODEL_DIR = Path("models/supervised")
+MODEL_DIR.mkdir(parents=True, exist_ok=True)
 
 print("Loading preprocessed features and labels...")
 X_train = pd.read_csv(PROCESSED_DIR / "X_train.csv")
