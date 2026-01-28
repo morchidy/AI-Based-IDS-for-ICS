@@ -33,6 +33,7 @@ ENV/
 data/raw/*.csv
 data/processed/*.csv
 data/live/*.csv
+data/*.db
 *.parquet
 *.h5
 *.hdf5
