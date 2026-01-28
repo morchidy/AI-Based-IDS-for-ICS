@@ -91,9 +91,29 @@ def preprocess_flow(flow, features, scaler, encoder):
     normalized = scaler.transform(vector)
     return normalized
 
+# 3. INFERENCE FUNCTIONS
+# Load trained model
+def load_model(model_path="models/supervised/rf_model.pkl"):
+    model = joblib.load(model_path)
+    print(f"Model loaded: {type(model).__name__}")
+    return model
 
-flow = {'protocol': 'IP:TCP', 'rBytesAvg': 90.5}
+# Predict if flow is attack
+def predict_attack(flow, model, features, scaler, encoder):
+    vector = preprocess_flow(flow, features, scaler, encoder)
+    prediction = model.predict(vector)[0]
+    probabilities = model.predict_proba(vector)[0]
+    confidence =probabilities[prediction]
+    return int(prediction), float(confidence)
+
+# test
+flow = {'protocol': 'IP:TCP', 'rBytesAvg': 120.5}
+# df = pd.read_csv("/home/mrx/Documents/ICS/ICSFlow//output/sniffed.csv")
+df = pd.read_csv("~/Desktop/Temp/flow.csv")
+new_flow = df.iloc[90]
+print("\nnew_flow:\n",new_flow)
+model = load_model(model_path="models/supervised/rf_model.pkl")
+print("\nmodel classes:\n",model.classes_)
 features, scaler, encoder = load_artifacts(artifacts_dir="models/artifacts")
-normalized = preprocess_flow(flow, features, scaler, encoder)
-print(normalized)
-print(encoder.classes_)
+predicton, confidence = predict_attack(new_flow, model, features, scaler, encoder)
+print(predicton, "\n", confidence)
