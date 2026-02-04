@@ -129,7 +129,7 @@ def check_new_flows(csv_path, last_row_count):
         return None, last_row_count
 
 # Main monitoring loop    
-def monitor_realtime(csv_path="output/sniffed.csv",
+def monitor_realtime(csv_path="/home/mrx/Documents/ICS/ICSFlow/output/sniffed.csv",
                     db_path="data/ids_events.db",
                     confidence_threshold=0.95,
                     poll_interval=2.0):
@@ -188,7 +188,7 @@ def monitor_realtime(csv_path="output/sniffed.csv",
 # 5. MAIN
 if __name__ == "__main__":
     monitor_realtime(
-        csv_path="output/sniffed.csv",
+        # csv_path="/home/mrx/Desktop/Temp/attacks.csv",
         db_path="data/ids_events.db",
         confidence_threshold=0.95,
         poll_interval=2.0
