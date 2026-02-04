@@ -37,6 +37,7 @@ data/*.db
 *.parquet
 *.h5
 *.hdf5
+*.db
 
 # Model files
 models/**/*.pkl
