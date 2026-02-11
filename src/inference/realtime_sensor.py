@@ -13,7 +13,10 @@ import joblib
 import json
 import time
 from pathlib import Path
+import argparse
 from datetime import datetime
+
+from model_adapters import load_model_adapter
 
 # 1. DATABASE FUNCTIONS
 # Create SQLite database and tables
@@ -96,17 +99,15 @@ def preprocess_flow(flow, features, scaler, encoder):
 # 3. INFERENCE FUNCTIONS
 # Load trained model
 def load_model(model_path="models/supervised/rf_model.pkl"):
-    model = joblib.load(model_path)
-    print(f"Model loaded: {type(model).__name__}")
-    return model
+    model_name, predict_fn = load_model_adapter(model_path)
+    print(f"Model loaded: {model_name}")
+    return predict_fn
 
 # Predict if flow is attack
-def predict_attack(flow, model, features, scaler, encoder):
+def predict_attack(flow, predict_fn, features, scaler, encoder):
     vector = preprocess_flow(flow, features, scaler, encoder)
-    prediction = model.predict(vector)[0]
-    probabilities = model.predict_proba(vector)[0]
-    confidence =probabilities[prediction]
-    return int(prediction), float(confidence)
+    prediction, confidence = predict_fn(vector)
+    return prediction, confidence
 
 
 # 4. MONITORING FUNCTIONS
@@ -131,12 +132,13 @@ def check_new_flows(csv_path, last_row_count):
 # Main monitoring loop    
 def monitor_realtime(csv_path="output/sniffed.csv",
                     db_path="data/ids_events.db",
+                    model_path="models/supervised/rf_model.pkl",
                     confidence_threshold=0.95,
                     poll_interval=2.0):
     # Initialize
     conn = init_database(db_path)
     features, scaler, encoder = load_artifacts()
-    model = load_model()
+    predict_fn = load_model(model_path)
 
     # State
     last_row_count = 0
@@ -158,7 +160,7 @@ def monitor_realtime(csv_path="output/sniffed.csv",
                 print(f"[{timestamp}] Processing {len(new_flows)} flows...")
 
                 for _, flow in new_flows.iterrows():
-                    pred, conf = predict_attack(flow, model, features, scaler, encoder)
+                    pred, conf = predict_attack(flow, predict_fn, features, scaler, encoder)
                     total_flows += 1
 
                     # High-confidence attack detected
@@ -187,9 +189,17 @@ def monitor_realtime(csv_path="output/sniffed.csv",
 
 # 5. MAIN
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='ICS IDS Real-Time Sensor')
+    parser.add_argument('-i', '--input', default='output/sniffed.csv', 
+                        help='Path to sniffed CSV file (default: output/sniffed.csv)')
+    parser.add_argument('-m', '--model', default='models/supervised/rf_model.pkl',
+                        help='Path to model file (default: models/supervised/rf_model.pkl)')
+    parser.add_argument('-t', '--threshold', type=float, default=0.95,
+                        help='Confidence threshold (default: 0.95)')
+    
+    args = parser.parse_args()
     monitor_realtime(
-        csv_path="output/sniffed.csv",
-        db_path="data/ids_events.db",
-        confidence_threshold=0.95,
+        csv_path=args.input,
+        confidence_threshold=args.threshold,
         poll_interval=2.0
     )

@@ -38,7 +38,7 @@ X_train_normal = X_train[normal_mask]
 print("\nTraining Isolation Forest...")
 model = IsolationForest(
     n_estimators=100,
-    contamination=0.01,
+    contamination=0.05,
     random_state=42,
     n_jobs=-1
 )

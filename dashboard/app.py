@@ -20,7 +20,7 @@ DB_PATH = "data/ids_events.db"
 
 # # DASHBOARD
 # Title
-st.title("ICS Intrusion Detection System")
+st.title("🛡️ ICS Intrusion Detection System")
 
 try:
     # Connect and fetch alerts
@@ -52,7 +52,7 @@ try:
             st.metric("Avg Confidence", f"{avg_conf:.1f}%")
         else:
             st.metric("Avg Confidence", "N/A")
-        
+
     # === RECENT ALERTS TABLE ===
     st.header("Recent Alerts")
     
@@ -77,7 +77,18 @@ try:
         )
     else:
         st.info("No alerts yet. Waiting for sensor data...")
+    
+    
+    # === TIMELINE GRAPH ===
+    st.header("Alert Timeline")
 
+    if not df.empty:
+        df_chart = df.set_index('timestamp').resample('1s').size().reset_index(name='alerts')
+        st.line_chart(df_chart.set_index('timestamp'), y='alerts', use_container_width=True)
+    else:
+        st.info("No data for timeline yet.")
+
+    
 except Exception as e:
     st.error(f"Error: {e}")
     st.exception(e)

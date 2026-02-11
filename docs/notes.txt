@@ -1,0 +1,45 @@
+Training Isolation Forest with normalized training set
+
+Anomaly threshold: 0.0141
+TEST SET RESULTS
+Accuracy:  0.8833 (88.33%)
+Precision: 0.9023
+Recall:    0.4578 (detected 1238/2704 attacks)
+F1-Score:  0.6075
+
+Confusion Matrix:
+  TN: 10,878  FP:   134
+  FN: 1,466  TP: 1,238
+
+==============================================================
+
+Training Isolation Forest with RobustScaler (Standardization)
+
+Evaluating on test set...
+
+TEST SET RESULTS
+Accuracy:  0.9012 (90.12%)
+Precision: 0.7788
+Recall:    0.6967 (detected 1884/2704 attacks)
+F1-Score:  0.7355
+
+Confusion Matrix:
+  TN: 10,477  FP:   535
+  FN:   820  TP: 1,884
+
+==============================================================
+
+Training Autoencoder
+
+Computing reconstruction errors...
+Anomaly threshold: 0.152894
+
+TEST SET RESULTS
+Accuracy:  0.9509 (95.09%)
+Precision: 0.8172
+Recall:    0.9675 (detected 2616/2704 attacks)
+F1-Score:  0.8860
+
+Confusion Matrix:
+  TN: 10,427  FP:   585
+  FN:    88  TP: 2,616
