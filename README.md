@@ -557,13 +557,7 @@ ICSFlowGenerator → sniffed.csv → Realtime Sensor → ids_events.db → Dashb
 ---
 
 ## To-Do
-- [ ] Add ANN model training script
-- [ ] Implement autoencoder for anomaly detection
-- [ ] Add email/Slack alert notifications
 - [ ] Create model comparison script
-- [ ] Add comprehensive unit tests
-- [ ] Implement logging system
-- [ ] Add configuration file support
 - [ ] Create Docker container
 - [ ] Add CI/CD pipeline
 
