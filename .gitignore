@@ -42,6 +42,7 @@ data/*.db
 # Model files
 models/**/*.pkl
 models/**/*.h5
+models/**/*.keras
 models/**/*.pt
 models/**/*.pth
 models/**/*.joblib

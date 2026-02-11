@@ -34,6 +34,7 @@ This ensures methodological rigor, reproducibility, and meaningful comparison wi
 - [Performance](#performance)
 - [Research Perspective](#research-perspective)
 - [Configuration](#configuration)
+- [Testing with ICSSIM](#testing-with-icssim)
 - [To-Do](#to-do)
 - [References](#references)
 - [Author](#author)
@@ -254,8 +255,11 @@ AI-Based-IDS-for-ICS/
 │   ├── training/
 │   │   ├── train_rf.py              # Random Forest training
 │   │   └── train_if.py              # Isolation Forest training
+│   │   └── train_ann.py             # ANN training
+│   │   └── train_autoencoder.py     # Autoencoder training
 │   └── inference/
 │       └── realtime_sensor.py       # Live monitoring
+│       └── model_adapters.py        # Unified interface for different ML model types
 │
 ├── dashboard/
 │   └── app.py                       # Streamlit dashboard
@@ -329,9 +333,6 @@ The Streamlit dashboard provides real-time visualization of IDS activity:
 3. **Auto-Refresh**
 
 ### Screenshot
-![Alt text](screenshots/icsflowgenerator.png)
-![Alt text](screenshots/rtsensor.png)
-![Alt text](screenshots/database.png)
 ![Alt text](screenshots/ids_ics.png)
 
 ---
@@ -417,6 +418,141 @@ Edit `dashboard/app.py`:
 time.sleep(5)  # Refresh every 5 seconds
 st.rerun()
 ```
+
+---
+
+## Testing with ICSSIM
+
+This section describes how to test the IDS in a realistic ICS environment using the **ICSSIM** testbed and **ICSFlowGenerator** for live traffic capture.
+
+### Prerequisites
+
+| Tool | Description | Link |
+|------|-------------|------|
+| **ICSSIM** | Dockerized ICS testbed (Modbus/TCP) | [GitHub](https://github.com/siemens/ICSSIM) |
+| **ICSFlowGenerator** | Converts raw packets to CSV flow records | Provided with the paper |
+| **Docker & Docker Compose** | Required to run ICSSIM | [docs.docker.com](https://docs.docker.com/) |
+
+### ICSFlowGenerator Fixes
+
+The original ICSFlowGenerator code may require two fixes before it works correctly:
+
+**Fix 1: ModuleNotFoundError**
+
+In three files, remove the `src.` prefix from import paths:
+
+```
+# Files to fix:
+#   cicflowmeter/flow_session.py
+#   cicflowmeter/features/context/packet_direction.py
+#   cicflowmeter/features/context/packet_flow_key.py
+
+# Before:
+from src.cicflowmeter.flow import Flow
+
+# After:
+from cicflowmeter.flow import Flow
+```
+
+Apply the same pattern (`src.cicflowmeter...` → `cicflowmeter...`) to all broken imports in those three files.
+
+**Fix 2: Dependency Version Constraint**
+
+In ICSFlowGenerator's `requirements.txt`, change strict version pinning to minimum version:
+
+```
+# Before:
+scapy~=2.5.0
+
+# After:
+scapy>=2.5.0
+```
+
+This avoids version conflicts on newer systems.
+
+### Step-by-Step Testing
+
+Testing requires **5 terminals** running simultaneously. Open them all before starting.
+
+#### Terminal 1 — Start ICSSIM Testbed
+
+```bash
+cd /path/to/ICSSIM/deployments
+./init.sh
+```
+
+Wait until all containers are running and the Modbus communication is active. You should see log output from the PLC, HMI, and network components.
+
+#### Terminal 2 — Start the IDS Sensor
+
+```bash
+cd /path/to/AI-Based-IDS-for-ICS
+python src/inference/realtime_sensor.py \
+    -i /path/to/ICSFlowGenerator/output/sniffed.csv \
+    -m models/supervised/rf_model.pkl \
+    -t 0.95
+```
+
+The sensor will poll the CSV file for new flow records and run inference. It prints alerts to the console and saves them to the SQLite database.
+
+#### Terminal 3 — Start the Dashboard
+
+```bash
+cd /path/to/AI-Based-IDS-for-ICS
+streamlit run dashboard/app.py
+```
+
+Open `http://localhost:8501` in your browser to monitor alerts in real time.
+
+#### Terminal 4 — Start ICSFlowGenerator
+
+```bash
+cd /path/to/ICSFlowGenerator
+sudo python3 src/ICSFlowGenerator.py sniff --source br_icsnet \
+ --interval 0.5 --target_file output/sniffed --use_port True
+```
+
+> **Note:** Replace `br_icsnet` with the correct network interface. Use `ip a` or `ifconfig` to find the interface connected to the ICSSIM Docker network.
+
+ICSFlowGenerator captures packets and converts them into CSV flow records that the IDS sensor reads.
+
+#### Terminal 5 — Launch an Attack
+
+Enter the attacker container and run an attack script:
+
+```bash
+# Enter the attacker container
+cd /path/to/ICSSIM/
+docker exec -it attacker bash
+
+# Inside the container, run an attack
+cd attacks
+# In this directory, there are .sh files to run attacks (ip scan, port scan, man in the middle, reply attack, dos)
+```
+
+### Expected Behavior
+
+Once the attack is running, you should observe the following chain of events:
+
+1. **ICSFlowGenerator** captures the attack packets and writes new rows to `sniffed.csv`
+2. **Realtime Sensor** detects new flows, runs the ML model, and flags suspicious traffic
+3. **SQLite Database** stores the alerts with timestamp, IPs, protocol, and confidence
+4. **Dashboard** displays the alerts in real time with metrics and table view
+
+```
+ICSFlowGenerator → sniffed.csv → Realtime Sensor → ids_events.db → Dashboard
+     (packets)       (flows)       (inference)        (alerts)       (UI)
+```
+
+### Screenshots
+
+| Component | Screenshot |
+|-----------|------------|
+| ICSSIM Running | ![ICSSIM](screenshots/icssim.png) |
+| ICSFlowGenerator | ![ICSFlowGenerator](screenshots/icsflowgenerator.png) |
+| Realtime Sensor | ![Sensor](screenshots/rtsensor.png) |
+| Dashboard | ![Dashboard](screenshots/ids_ics.png) |
+| Database | ![Database](screenshots/database.png) |
 
 ---
 
